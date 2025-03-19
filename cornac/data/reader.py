@@ -47,6 +47,16 @@ def tup_parser(tokens, **kwargs):
     ]
 
 
+def features_parser(tokens, **kwargs):
+    return [
+        (
+            tokens[0],
+            tokens[1],
+            tokens[2:],
+        )
+    ]
+
+
 def ubi_parser(tokens, **kwargs):
     return [(tokens[0], tokens[1], tokens[2])]
 
@@ -84,6 +94,7 @@ PARSERS = {
     "UIR": uir_parser,
     "UIRT": uirt_parser,
     "UITup": tup_parser,
+    "UIFeatures": features_parser,
     "UIReview": review_parser,
     "UBI": ubi_parser,
     "UBIT": ubit_parser,
@@ -297,7 +308,7 @@ class Reader:
             Path to the data file.
 
         fmt: str, default: 'UIR'
-            Line format to be parsed ('UI', 'UIR', 'UIRT', 'UITup', 'UIReview', 'UBI', 'UBIT', or 'UBITJson')
+            Line format to be parsed ('UI', 'UIR', 'UIRT', 'UITup', 'UIFeatures', 'UIReview', 'UBI', 'UBIT', or 'UBITJson')
 
         sep: str, default: '\t'
             The delimiter string.

@@ -13,22 +13,25 @@
 # limitations under the License.
 # ============================================================================
 
-from collections import OrderedDict
 import time
+from collections import OrderedDict
 
 import numpy as np
 from scipy.sparse import csr_matrix
 from tqdm.auto import tqdm
 
-from ..data import FeatureModality
-from ..data import TextModality, ReviewModality
-from ..data import ImageModality
-from ..data import GraphModality
-from ..data import SentimentModality
-from ..data import Dataset
-from ..metrics import RatingMetric
-from ..metrics import RankingMetric
+from ..data import (
+    ContextModality,
+    Dataset,
+    FeatureModality,
+    GraphModality,
+    ImageModality,
+    ReviewModality,
+    SentimentModality,
+    TextModality,
+)
 from ..experiment.result import Result
+from ..metrics import RankingMetric, RatingMetric
 from ..utils import get_rng
 
 
@@ -287,6 +290,7 @@ class BaseMethod:
         self.item_image = kwargs.get("item_image", None)
         self.item_graph = kwargs.get("item_graph", None)
         self.sentiment = kwargs.get("sentiment", None)
+        self.context = kwargs.get("context", None)
         self.review_text = kwargs.get("review_text", None)
 
         if verbose:
@@ -432,6 +436,20 @@ class BaseMethod:
                 )
             )
         self.__sentiment = input_modality
+
+    @property
+    def context(self):
+        return self.__context
+
+    @context.setter
+    def context(self, input_modality):
+        if input_modality is not None and not isinstance(input_modality, ContextModality):
+            raise ValueError(
+                "input_modality has to be instance of ContextModality but {}".format(
+                    type(input_modality)
+                )
+            )
+        self.__context = input_modality
 
     @property
     def review_text(self):
@@ -583,7 +601,7 @@ class BaseMethod:
                 dok_matrix=self.train_set.dok_matrix,
             )
 
-        for modality in [self.sentiment, self.review_text]:
+        for modality in [self.sentiment, self.context, self.review_text]:
             if modality is None:
                 continue
             modality.build(
@@ -602,6 +620,7 @@ class BaseMethod:
             item_image=self.item_image,
             item_graph=self.item_graph,
             sentiment=self.sentiment,
+            context=self.context,
             review_text=self.review_text,
         )
 
@@ -619,6 +638,7 @@ class BaseMethod:
         self.item_image = kwargs.get("item_image", None)
         self.item_graph = kwargs.get("item_graph", None)
         self.sentiment = kwargs.get("sentiment", None)
+        self.context = kwargs.get("context", None)
         self.review_text = kwargs.get("review_text", None)
 
         for data_set in [self.train_set, self.test_set, self.val_set]:
@@ -634,6 +654,7 @@ class BaseMethod:
                 item_image=self.item_image,
                 item_graph=self.item_graph,
                 sentiment=self.sentiment,
+                context=self.context,
                 review_text=self.review_text,
             )
 

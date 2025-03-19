@@ -19,6 +19,7 @@ from .text import TextModality, ReviewModality
 from .image import ImageModality
 from .graph import GraphModality
 from .sentiment import SentimentModality
+from .context import ContextModality
 from .reader import Reader
 from .dataset import Dataset
 from .dataset import BasketDataset
@@ -31,6 +32,7 @@ __all__ = [
     "ImageModality",
     "GraphModality",
     "SentimentModality",
+    "ContextModality",
     "BasketDataset",
     "SequentialDataset",
     "Dataset",
