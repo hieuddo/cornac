@@ -132,6 +132,8 @@
 
 [tiger_example.py](tiger_example.py) - Generative retrieval with semantic IDs (TIGER) on Amazon Beauty with Sentence-T5 item content embeddings, reproducing the paper's leave-last-out protocol.
 
+[rpg_example.py](rpg_example.py) - Parallel generation of long unordered semantic IDs (RPG): OPQ tokenizer + multi-token prediction + graph-guided decoding, with Diginetica dataset.
+
 ----
 
 ## Next-Basket Algorithms

@@ -16,7 +16,9 @@
 import unittest
 import warnings
 
-from cornac.data import Reader
+import numpy as np
+
+from cornac.data import FeatureModality, Reader
 from cornac.eval_methods import NextItemEvaluation
 from cornac.metrics import HitRatio, Recall
 from cornac.models import SPop
@@ -145,13 +147,18 @@ class TestFromTimestamps(unittest.TestCase):
     def test_empty_val_warns(self):
         # No session ends in [55, 65): train={s1,s2,s3}, test={s4,s5,s6}, val
         # empty -> warn and fall back to no validation set.
-        with self.assertWarns(UserWarning):
+        # catch_warnings instead of assertWarns: assertWarns probes
+        # __warningregistry__ on every module in sys.modules, which trips
+        # transformers 5.x's lazy __getattr__ when model tests ran earlier.
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
             m = NextItemEvaluation.from_timestamps(
                 self.usit,
                 test_timestamp=65,
                 val_timestamp=55,
                 fmt="USIT",
             )
+        self.assertTrue(any(issubclass(w.category, UserWarning) for w in caught))
         self.assertIsNone(m.val_set)
 
     def test_verbose(self):
@@ -270,6 +277,72 @@ class TestLeaveLastOut(unittest.TestCase):
         # Exercise the verbose split-summary branch.
         m = NextItemEvaluation.leave_last_out(self.uirt, verbose=True)
         self.assertEqual(_split_sids(m.test_set), {"u1", "u2"})
+
+
+class TestGlobalSidMap(unittest.TestCase):
+    def test_val_set_shares_global_sid_map(self):
+        # The same raw session (user) appears in train/val/test under
+        # leave_last_out; its mapped session id must agree across splits.
+        uirt = [
+            ("u1", "a", 1.0, 10),
+            ("u1", "b", 1.0, 20),
+            ("u1", "c", 1.0, 30),
+            ("u2", "b", 1.0, 15),
+            ("u2", "a", 1.0, 25),
+            ("u2", "d", 1.0, 35),
+        ]
+        m = NextItemEvaluation.leave_last_out(uirt, exclude_unknowns=False)
+        for raw_sid in ["u1", "u2"]:
+            self.assertEqual(m.val_set.sid_map[raw_sid], m.train_set.sid_map[raw_sid])
+            self.assertEqual(m.test_set.sid_map[raw_sid], m.train_set.sid_map[raw_sid])
+
+
+class TestItemFeature(unittest.TestCase):
+    """Content (item_feature) support: modalities passed as kwargs must be
+    built against the global item-ID map and attached to every split, so
+    content-based next-item models (e.g., TIGER) can read
+    ``train_set.item_feature.features`` with rows aligned to item indices."""
+
+    def setUp(self):
+        self.items = ["a", "b", "c", "d"]
+        self.features = np.arange(4 * 3, dtype="float").reshape(4, 3)
+        self.uirt = [
+            ("u1", "a", 1.0, 10),
+            ("u1", "b", 1.0, 20),
+            ("u1", "c", 1.0, 30),
+            ("u2", "b", 1.0, 15),
+            ("u2", "d", 1.0, 25),
+            ("u2", "a", 1.0, 35),
+        ]
+
+    def _modality(self):
+        return FeatureModality(
+            features=self.features, ids=self.items, normalized=False
+        )
+
+    def test_leave_last_out_attaches_and_aligns(self):
+        m = NextItemEvaluation.leave_last_out(
+            self.uirt, exclude_unknowns=False, item_feature=self._modality()
+        )
+        for split in [m.train_set, m.val_set, m.test_set]:
+            self.assertIsNotNone(split.item_feature)
+        feats = m.train_set.item_feature.features
+        # row k of built features == raw features of the item mapped to index k
+        for raw_id, mapped_idx in m.global_iid_map.items():
+            np.testing.assert_array_equal(
+                feats[mapped_idx], self.features[self.items.index(raw_id)]
+            )
+
+    def test_from_splits_attaches(self):
+        usit = [(u, u, i, t) for u, i, _, t in self.uirt]
+        m = NextItemEvaluation.from_splits(
+            train_data=usit[:4],
+            test_data=usit[4:],
+            fmt="USIT",
+            item_feature=self._modality(),
+        )
+        self.assertIsNotNone(m.train_set.item_feature)
+        self.assertIsNotNone(m.test_set.item_feature)
 
 
 if __name__ == "__main__":

@@ -16,6 +16,11 @@ Comparative Aspects and Opinions Ranking for Recommendation Explanations (Compan
 .. automodule:: cornac.models.companion.recom_companion
    :members:
 
+Generating Long Semantic IDs in Parallel for Recommendation (RPG)
+-----------------------------------------------------------------
+.. automodule:: cornac.models.rpg.recom_rpg
+   :members:
+
 Disentangled Multimodal Representation Learning for Recommendation (DMRL)
 -------------------------------------------------------------------------
 .. automodule:: cornac.models.dmrl.recom_dmrl

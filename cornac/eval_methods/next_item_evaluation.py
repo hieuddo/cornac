@@ -192,6 +192,14 @@ class NextItemEvaluation(BaseMethod):
 
     Notes
     -----
+    **Item content.** Modalities (e.g.,
+    ``item_feature=FeatureModality(features=..., ids=...)``) can be passed as
+    keyword arguments to the constructor or any of the class-method builders
+    (:meth:`from_splits`, :meth:`from_timestamps`, :meth:`leave_last_out`).
+    They are built against the global item-ID map and attached to all splits,
+    so content-based next-item models (e.g., TIGER) can read
+    ``train_set.item_feature.features`` with rows aligned to item indices.
+
     **Data splitting.** Ratio-based splitting (inherited from
     :obj:`BaseMethod`) and per-user leave-last-out both leak future
     information into training: a random split trains on interactions that
@@ -277,6 +285,7 @@ class NextItemEvaluation(BaseMethod):
                 fmt=self.fmt,
                 global_uid_map=self.global_uid_map,
                 global_iid_map=self.global_iid_map,
+                global_sid_map=self.global_sid_map,
                 seed=self.seed,
                 exclude_unknowns=self.exclude_unknowns,
             )
