@@ -75,6 +75,7 @@ from .online_ibpr import OnlineIBPR
 from .pcrl import PCRL
 from .pmf import PMF
 from .recvae import RecVAE
+from .rpg import RPG
 from .sansa import SANSA
 from .sasrec import SASRec
 from .sbpr import SBPR
