@@ -32,29 +32,51 @@ class DIGER(NextItemRecommender):
 
     Parameters
     ----------
+    name: str, default: "DIGER"
+        Model name.
     initializer: dict or path, optional
         Bundle produced by ``training.pretrain_tokenizer`` on the same ordered
         catalog/features. If absent, train a matched-feature RQ autoencoder first.
-    tokenizer_options, generator_options: dict, optional
-        Tokenizer options include hidden_dims, latent_dim, levels and codebook_size.
-        Generator options include model_dim, ff_dim, num_layers and num_heads.
-        The feature encoder is frozen after
-        initialization; recommendation gradients update the residual codebooks.
+    tokenizer_options: dict, optional
+        Options for ``diger.SemanticTokenizer``, including hidden_dims, latent_dim,
+        levels and codebook_size. The encoder is frozen after initialization;
+        recommendation gradients update the residual codebooks.
+    generator_options: dict, optional
+        Options for ``diger.PositionalGenerator``, including model_dim, ff_dim,
+        num_layers and num_heads. Levels and vocabulary must match the tokenizer.
     initializer_options: dict, optional
         ``pretrain_tokenizer`` options (default: 100 epochs, 20 warmup epochs,
-        batch size 256, learning rate 0.001). ``initializer_seed`` defaults to 2024.
+        batch size 256, learning rate 0.001).
+    initializer_seed: int, default: 2024
+        Random seed for pretraining a fresh initializer.
     n_epochs: int, default: 120
         Joint training horizon; validation NDCG@10 selects paired model/catalog.
+    batch_size: int, default: 256
+        Number of training prefixes per batch.
+    eval_batch_size: int, default: 32
+        Number of validation sessions per batch.
     learning_rate: float, default: 0.0005
         Generator AdamW learning rate.
     tokenizer_learning_rate: float, default: 0.00003
         Codebook AdamW learning rate. Both rates were selected on Beauty validation.
+    weight_decay: float, default: 0.05
+        Weight decay for both joint-training AdamW optimizers.
+    warmup_steps: int, default: 500
+        Linear warmup steps before cosine learning-rate decay.
     max_len: int, default: 210
         Maximum number of history items, used consistently during fit/inference.
     n_beams: int, default: 20
         Unconstrained positional beam width. Use at least the evaluation cutoff.
+    early_stopping_patience: int, default: 15
+        Stop after this many epochs without strict validation improvement.
     device: str, default: 'cpu'
         PyTorch device, or 'auto' to select CUDA when available.
+    trainable: bool, default: True
+        Whether ``fit`` trains the model.
+    verbose: bool, default: False
+        Whether to print epoch loss and validation scores.
+    seed: int, default: 2024
+        Random seed for generator initialization and joint training.
     """
 
     def __init__(self, name="DIGER", initializer=None, tokenizer_options=None,
@@ -129,7 +151,7 @@ class DIGER(NextItemRecommender):
         features, _ = self._feature_rows(train_set)
         train_rows, val_rows = self._rows(train_set), self._rows(val_set)
         import torch
-        from .backend import DIGERBackend
+        from .diger import DIGERBackend
         from .training import pretrain_tokenizer, tensor_hash, train
 
         self._ensure_device(torch)

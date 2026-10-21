@@ -16,6 +16,6 @@
 """DIGER next-item recommendation."""
 
 from .recom_diger import DIGER
-from .beauty_config import BEAUTY_ST5_CONFIG, BEAUTY_OPENAI_CONFIG
+from .diger_config import BEAUTY_ST5_CONFIG, BEAUTY_OPENAI_CONFIG
 
 __all__ = ["DIGER", "BEAUTY_ST5_CONFIG", "BEAUTY_OPENAI_CONFIG"]

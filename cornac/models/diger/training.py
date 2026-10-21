@@ -22,7 +22,7 @@ import numpy as np
 import torch
 from torch import nn
 from torch.nn import functional as F
-from .backend import SemanticTokenizer
+from .diger import SemanticTokenizer
 
 
 def tensor_hash(value):

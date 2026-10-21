@@ -237,10 +237,7 @@ class PositionalGenerator(nn.Module):
                 self.positions[i](paths[:, i+1]) for i in range(position)], 1)
             logits = self.forward(None, expanded, decoder, encoded)[:, -1]
             candidates = (F.log_softmax(logits, -1) + scores.reshape(-1, 1)).reshape(batch, -1)
-            # Retain the highest-scoring B paths after sorted top-2B selection.
-            top_scores, choices = candidates.topk(2*beams, dim=1, sorted=True)
-            choices = choices[:, :beams]
-            scores = top_scores[:, :beams]
+            scores, choices = candidates.topk(beams, dim=1, sorted=True)
             parents = choices // vocabulary + torch.arange(batch, device=codes.device)[:, None]*beams
             paths = torch.cat([paths[parents.flatten()], (choices % vocabulary).reshape(-1, 1)], 1)
         return (paths[:, 1:].reshape(batch, beams, -1)[:, :returns],
