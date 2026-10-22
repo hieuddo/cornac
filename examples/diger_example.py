@@ -15,7 +15,7 @@ import numpy as np
 import cornac
 from cornac.data import FeatureModality
 from cornac.datasets import amazon_review
-from cornac.eval_methods import NextItemEvaluation
+from cornac.eval_methods import NextItemEvaluation, SemanticIDEvaluation
 from cornac.metrics import NDCG, Recall
 from cornac.models import DIGER
 from cornac.models.diger import BEAUTY_OPENAI_CONFIG, BEAUTY_ST5_CONFIG
@@ -27,6 +27,8 @@ def main():
     parser.add_argument("--embedding", choices=("st5", "openai"), default="st5")
     parser.add_argument("--initializer", help="Optional matched initializer bundle")
     parser.add_argument("--device", default="auto")
+    parser.add_argument("--semantic-id-evaluation", action="store_true",
+                        help="Report SID, CCE and popularity-resolved item metrics")
     args = parser.parse_args()
     if args.embedding == "openai" and not args.features:
         parser.error("OpenAI mode requires precomputed --features")
@@ -42,7 +44,8 @@ def main():
         features = encoder.encode(texts, batch_size=64, show_progress_bar=True)
         del encoder
 
-    evaluation = NextItemEvaluation.leave_last_out(
+    evaluator = SemanticIDEvaluation if args.semantic_id_evaluation else NextItemEvaluation
+    evaluation = evaluator.leave_last_out(
         data=data, exclude_unknowns=True, verbose=True,
         item_feature=FeatureModality(features=features, ids=item_ids),
     )

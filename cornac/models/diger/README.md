@@ -55,6 +55,24 @@ Validation NDCG@10 is evaluated every epoch in batches of 32; training stops aft
   semantic-ID collisions. Unconstrained beam search scores valid full addresses;
   set `n_beams` at least as large as the largest evaluation cutoff.
 
+## Semantic ID evaluation
+
+DIGER implements `SemanticIDRecommender`. Use `SemanticIDEvaluation` in place of
+`NextItemEvaluation` above, or add `--semantic-id-evaluation` to the example,
+to report `SID/Recall@k`, `CCE/Recall@k`, and `Item[popularity]/Recall@k` (and
+NDCG) from the same raw beam predictions. The shared evaluator also supports
+explicit history-cosine and custom member resolvers; see the
+[Semantic ID guide](../../../docs/source/api_ref/eval_methods.rst).
+
+The catalog exports tokenizer prefixes separately from complete addresses,
+including DIGER's deterministic collision suffix. Complete addresses uniquely
+identify items, so SID, CCE and item-resolver metrics agree for identical raw
+slots. Invalid or duplicate generated addresses retain empty rank positions;
+this can differ from ordinary item ranking. Requested evaluation cutoffs expand
+the beam width when needed. A cutoff above the generator's codebook vocabulary
+size is rejected by the decoder.
+Training validation and checkpoint selection retain their native NDCG@10 rule.
+
 ## Results
 
 Retained Beauty study results below are mean ± sample SD over joint-training

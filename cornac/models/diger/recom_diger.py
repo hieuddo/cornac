@@ -19,10 +19,11 @@ from pathlib import Path
 
 import numpy as np
 
-from ..recommender import NextItemRecommender
+from ..recommender import SemanticIDRecommender
+from ...utils.semantic_id import SemanticIDCatalog, SemanticIDPrediction
 
 
-class DIGER(NextItemRecommender):
+class DIGER(SemanticIDRecommender):
     """DIGER with frequency-gated residual quantization and T5 generation.
 
     Supply precomputed item embeddings through ``FeatureModality`` in
@@ -189,6 +190,7 @@ class DIGER(NextItemRecommender):
             self.backend_, train_rows, val_rows, config=config, verbose=self.verbose)
         self.best_epoch, self.best_value = selected["epoch"], selected["ndcg@10"]
         self.codes_ = selected["catalog"].numpy().copy()
+        self.__dict__.pop("semantic_id_catalog_", None)
         self.sid_to_item_ = {tuple(code): item for item, code in enumerate(self.codes_[1:])}
         self.backend_.to("cpu")
         return self
@@ -209,24 +211,53 @@ class DIGER(NextItemRecommender):
         finally:
             self.backend_.to(original_device)
 
-    def score(self, user_idx, history_items, item_idx=None, **kwargs):
-        """Return catalog scores from unconstrained full-address beam search."""
+    def semantic_id_catalog(self):
+        """Export tokenizer prefixes and complete collision-suffixed addresses."""
+        if not hasattr(self, "codes_"):
+            raise ValueError("DIGER must be fitted before exporting its SID catalog")
+        if not hasattr(self, "semantic_id_catalog_"):
+            cardinalities = tuple(position.num_embeddings
+                                  for position in self.backend_.generator.positions)
+            self.semantic_id_catalog_ = SemanticIDCatalog(
+                np.arange(len(self.codes_) - 1), self.codes_[1:, :-1], self.codes_[1:],
+                cardinalities[:-1], cardinalities,
+            )
+        return self.semantic_id_catalog_
+
+    def predict_semantic_ids(self, history_items, **context):
+        """Decode raw addresses once, retaining invalid and duplicate slots."""
         import torch
 
-        scores = np.full(self.total_items, -np.inf, dtype="float64")
+        catalog = self.semantic_id_catalog()
         history = list(history_items)[-self.max_len:]
-        if history:
-            if any(i < 0 or i >= self.total_items for i in history):
-                raise ValueError("History item outside catalog")
-            self._ensure_device(torch)
-            self.backend_.to(self.device).eval()
-            codes = torch.tensor(self.codes_[np.asarray(history, dtype="int64") + 1],
-                                 device=self.device)[None]
-            paths, values = self.backend_.generator.beam_search(
-                codes, torch.ones(codes.shape[:2], dtype=torch.bool, device=self.device),
-                beams=self.n_beams)
-            for address, value in zip(paths[0].cpu().tolist(), values[0].cpu().tolist()):
-                item = self.sid_to_item_.get(tuple(address))
-                if item is not None:
-                    scores[item] = value
+        beams = max(self.n_beams, context.get("n_candidates") or 0)
+        if not history:
+            return SemanticIDPrediction(
+                np.empty((0, catalog.address_sids.shape[1]), dtype="int64"),
+                [], [], {"empty_history": True},
+            )
+        if any(i < 0 or i >= self.total_items for i in history):
+            raise ValueError("History item outside catalog")
+        self._ensure_device(torch)
+        self.backend_.to(self.device).eval()
+        codes = torch.tensor(self.codes_[np.asarray(history, dtype="int64") + 1],
+                             device=self.device)[None]
+        paths, values = self.backend_.generator.beam_search(
+            codes, torch.ones(codes.shape[:2], dtype=torch.bool, device=self.device),
+            beams=beams)
+        addresses = paths[0].cpu().numpy()
+        return SemanticIDPrediction(
+            addresses, values[0].cpu().numpy(),
+            [tuple(address) in catalog.address_to_items for address in addresses],
+            {"scoring": "beam", "beam_size": beams},
+        )
+
+    def score(self, user_idx, history_items, item_idx=None, **kwargs):
+        """Return catalog scores from unconstrained full-address beam search."""
+        scores = np.full(self.total_items, -np.inf, dtype="float64")
+        prediction = self.predict_semantic_ids(history_items)
+        for address, value in zip(prediction.address_sids, prediction.scores):
+            item = self.sid_to_item_.get(tuple(address))
+            if item is not None:
+                scores[item] = value
         return scores if item_idx is None else scores[item_idx]
