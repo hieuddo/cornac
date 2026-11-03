@@ -338,3 +338,8 @@ Semantic ID Model Contracts
 --------------------------
 .. autoclass:: cornac.models.recommender.SemanticIDMixin
    :members:
+
+Bundle Recommender Interface
+----------------------------
+.. autoclass:: cornac.models.BundleRecommender
+   :members:
