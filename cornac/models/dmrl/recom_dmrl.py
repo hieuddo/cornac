@@ -108,7 +108,7 @@ class DMRL(Recommender):
         self.epochs = epochs
         self.verbose = verbose
         self.embedding_dim = embedding_dim
-        self.text_dim = bert_text_dim
+        self.bert_text_dim = bert_text_dim
         self.image_dim = image_dim
         self.dropout = dropout
         self.num_neg = num_neg
@@ -246,7 +246,7 @@ class DMRL(Recommender):
             self.num_users,
             self.num_items,
             self.embedding_dim,
-            self.text_dim,
+            self.bert_text_dim,
             self.image_dim,
             self.dropout,
             self.num_neg,
@@ -271,7 +271,7 @@ class DMRL(Recommender):
                     "batch_size": self.batch_size,
                     "epochs": self.epochs,
                     "embedding_dim": self.embedding_dim,
-                    "bert_text_dim": self.text_dim,
+                    "bert_text_dim": self.bert_text_dim,
                     "num_neg": self.num_neg,
                     "num_factors": self.num_factors,
                     "dropout": self.dropout,

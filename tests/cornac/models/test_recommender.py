@@ -13,12 +13,14 @@
 # limitations under the License.
 # ============================================================================
 
+import inspect
 import tempfile
 import unittest
 
 import numpy as np
 from numpy.testing import assert_array_equal
 
+from cornac import models
 from cornac.data import BasketDataset, BundleDataset, Dataset, SequentialDataset, Reader
 from cornac.models import (
     MF,
@@ -69,6 +71,20 @@ class TestRecommender(unittest.TestCase):
         mf.on_epoch_end(1, loss=0.5)
         self.assertEqual(calls, [(mf, 1, {"loss": 0.5})])
         self.assertIs(mf.clone().callbacks, mf.callbacks)
+
+    def test_clone_keeps_init_params(self):
+        for name, cls in inspect.getmembers(models, inspect.isclass):
+            if not issubclass(cls, Recommender):
+                continue
+            try:
+                model = cls()
+            except (TypeError, ImportError, SystemExit):
+                continue  # needs arguments, an optional package, or Linux (FM)
+            clone = model.clone()
+            for param in cls._get_init_params():
+                np.testing.assert_equal(
+                    getattr(clone, param), getattr(model, param), err_msg=name
+                )
 
     def test_early_stop(self):
         model = Recommender("model")

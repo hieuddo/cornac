@@ -107,6 +107,8 @@ class SANSA(Recommender, ANNMixin):
         self.verbose = verbose
         self.seed = seed
         self.X = X.astype(np.float32) if X is not None and X.dtype != np.float32 else X
+        self.W1 = W1
+        self.W2 = W2
         self.weights = (W1, W2)
 
     def fit(self, train_set, val_set=None):

@@ -176,6 +176,10 @@ class Companion(Recommender):
         self.n_element_samples = n_element_samples
         self.n_top_aspects = n_top_aspects
         self.alpha = alpha
+        self.min_user_freq = min_user_freq
+        self.min_pair_freq = min_pair_freq
+        self.min_common_freq = min_common_freq
+        self.enum_window = enum_window
         self.lambda_reg = lambda_reg
         self.lambda_bpr = lambda_bpr
         self.lambda_p = lambda_p

@@ -150,7 +150,8 @@ class ComparERObj(Recommender):
                  early_stopping=None, trainable=True, verbose=False, init_params=None, seed=None):
 
         Recommender.__init__(self, name=name, trainable=trainable, verbose=verbose)
-        self.model_type = self._validate_model_type(model_type)
+        self._validate_model_type(model_type)
+        self.model_type = model_type
         self.num_explicit_factors = num_explicit_factors
         self.num_latent_factors = num_latent_factors
         self.num_most_cared_aspects = num_most_cared_aspects
@@ -268,7 +269,7 @@ class ComparERObj(Recommender):
         """Fit the model parameters (U1, U2, V, H1, H2)
         """
         cdef:
-            int model_type = self.model_type
+            int model_type = MODEL_TYPES[self.model_type]
             int FINER_MODEL = MODEL_TYPES["Finer"]
             int DOM_MODEL = MODEL_TYPES["Dominant"]
             int AROUND_MODEL = MODEL_TYPES["Around"]

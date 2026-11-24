@@ -179,6 +179,12 @@ class LETTER(TIGER):
             else np.asarray(precomputed_semantic_ids, dtype="int64")
         )
 
+    @classmethod
+    def _get_init_params(cls):
+        """Get LETTER's parameters and the TIGER parameters it passes on."""
+        params = set(super()._get_init_params()) | set(TIGER._get_init_params())
+        return sorted(params - {"kwargs", "tokenizer"})
+
     def _get_cf_embeddings(self):
         if self.cf_weight and self.cf_embeddings is None:
             raise ValueError("LETTER requires cf_embeddings when cf_weight is non-zero")

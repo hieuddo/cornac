@@ -115,6 +115,7 @@ class RecVAE(Recommender):
         self.n_dec_epochs = n_dec_epochs
         self.not_alternating = not_alternating
         self.seed = seed
+        self.use_gpu = use_gpu
 
 
         import torch

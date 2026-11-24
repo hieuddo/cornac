@@ -124,6 +124,7 @@ class FM(Recommender, ANNMixin):
         self.max_iter = max_iter
         self.learning_rate = learning_rate
 
+        self.reg_all = reg_all
         self.reg0 = reg_all if reg_all != 0.0 else reg0
         self.reg1 = reg_all if reg_all != 0.0 else reg1
         self.reg2 = reg_all if reg_all != 0.0 else reg2
