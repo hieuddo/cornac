@@ -107,6 +107,23 @@ class TestExperiment(unittest.TestCase):
             with open(path) as f:
                 self.assertEqual(json.load(f), expected)
 
+    def test_result_export_numpy_seed(self):
+        for seed, expected in [
+            (np.int64(123), 123),
+            (np.random.RandomState(123), None),
+        ]:
+            exp = Experiment(
+                eval_method=RatioSplit(
+                    self.data, test_size=0.2, exclude_unknowns=False, seed=seed
+                ),
+                models=[PMF(1, 0)],
+                metrics=[MAE()],
+            )
+            exp.run()
+            self.assertEqual(
+                json.loads(exp.result.to_json())[0]["eval"]["seed"], expected
+            )
+
     def test_search_params(self):
         ratio_split = RatioSplit(
             self.data, test_size=0.2, val_size=0.2, exclude_unknowns=False, seed=123

@@ -45,6 +45,14 @@ def _json_params(model):
     return params
 
 
+def _json_seed(seed):
+    """Return the seed as to_json() writes it, or None if JSON cannot hold it."""
+    try:
+        return json.loads(json.dumps(seed, default=_numpy_scalar))
+    except TypeError:
+        return None
+
+
 class Experiment:
     """ Experiment Class
 
@@ -164,7 +172,7 @@ class Experiment:
             model_params = _json_params(model)
             eval_params = {
                 "method": type(self.eval_method).__name__,
-                "seed": self.eval_method.seed,
+                "seed": _json_seed(self.eval_method.seed),
             }
             test_result, val_result = self.eval_method.evaluate(
                 model=model,
