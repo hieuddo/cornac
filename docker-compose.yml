@@ -7,7 +7,7 @@ services:
       - $PWD/save_dir:/app/cornac/serving/save_dir
       - cornacvol:/app/cornac/serving/data
     environment:
-      - MODEL_PATH=save_dir/bpr
+      - MODEL_PATH=save_dir/BPR
       - MODEL_CLASS=cornac.models.BPR
     ports:
       - 8080:5000

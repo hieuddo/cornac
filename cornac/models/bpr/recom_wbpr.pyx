@@ -43,7 +43,7 @@ class WBPR(BPR):
     learning_rate: float, optional, default: 0.001
         The learning rate for SGD.
 
-    lambda_reg: float, optional, default: 0.001
+    lambda_reg: float, optional, default: 0.01
         The regularization hyper-parameter.
 
     use_bias: boolean, optional, default: True
@@ -56,7 +56,7 @@ class WBPR(BPR):
     trainable: boolean, optional, default: True
         When False, the model will not be re-trained, and input of pre-trained parameters are required.
 
-    verbose: boolean, optional, default: True
+    verbose: boolean, optional, default: False
         When True, some running logs are displayed.
 
     init_params: dictionary, optional, default: None
